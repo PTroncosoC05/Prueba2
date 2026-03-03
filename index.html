@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Proyecto IoT - ESP32</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      font-family: Arial;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      padding: 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 50px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 40px;
+      border-radius: 20px;
+      width: 250px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.5);
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .value {
+      font-size: 50px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🌡 Proyecto IoT - ESP32 DHT11</h1>
+
+<div class="container">
+  <div class="card">
+    <h2>Temperatura</h2>
+    <div class="value" id="temp">--</div>
+    <p>°C</p>
+  </div>
+
+  <div class="card">
+    <h2>Humedad</h2>
+    <div class="value" id="hum">--</div>
+    <p>%</p>
+  </div>
+</div>
+
+<script>
+const CLIENT_ID = "a5ef69f4-6706-4dd5-b1fe-bb387b939ae5";
+const CLIENT_SECRET = "TXQ1JH1IyQqbSJC2He!wSiqfF";
+const THING_ID = "1d23af3e-e966-48cc-afcd-97b7dbfc269d";
+
+async function getToken() {
+  const response = await fetch("https://api2.arduino.cc/iot/v1/clients/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&audience=https://api2.arduino.cc/iot`
+  });
+
+  return await response.json();
+}
+
+async function getData() {
+  const tokenData = await getToken();
+
+  const response = await fetch(`https://api2.arduino.cc/iot/v2/things/${THING_ID}`, {
+    headers: { Authorization: `Bearer ${tokenData.access_token}` }
+  });
+
+  const data = await response.json();
+
+  data.properties.forEach(property => {
+    if (property.name === "temperatura") {
+      document.getElementById("temp").innerText =
+        property.last_value.toFixed(1);
+    }
+    if (property.name === "humedad") {
+      document.getElementById("hum").innerText =
+        property.last_value.toFixed(1);
+    }
+  });
+}
+
+getData();
+setInterval(getData, 5000);
+</script>
+
+</body>
+</html>
